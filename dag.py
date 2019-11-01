@@ -5,7 +5,7 @@ from airflow.operators.python_operator import PythonOperator
 from helper import upload_file_to_s3_with_hook
 
 default_args = {
-    'owner': 'arnaud',
+    'owner': 'baris',
     'start_date': datetime(2019, 1, 1),
     'retry_delay': timedelta(minutes=5)
 }
@@ -20,6 +20,7 @@ with DAG('S3_dag_test', default_args=default_args,
         python_callable=upload_file_to_s3_with_hook,
         op_kwargs={
             'filename': '/home/baris/Desktop/Untitled.csv',
+            'key': 'test.csv',
             'bucket_name': 'import-snowflake',
         },
         dag=dag)
