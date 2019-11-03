@@ -1,8 +1,15 @@
 import csv
 import os
+import tempfile
 
 from airflow.contrib.hooks import snowflake_hook
 from airflow.hooks import S3_hook
+
+TMP_DIRECTORY = tempfile.TemporaryDirectory()
+ROLES_PATH = os.path.join(TMP_DIRECTORY.name, "roles.csv")
+ROLE_GRANTS_PATH = os.path.join(TMP_DIRECTORY.name, "role_grants.csv")
+USERS_PATH = os.path.join(TMP_DIRECTORY.name, "users.csv")
+USER_GRANTS_PATH = os.path.join(TMP_DIRECTORY.name, "user_grants.csv")
 
 
 def fetch_data_from_snowflake():
@@ -20,9 +27,7 @@ def fetch_data_from_snowflake():
             cursor.execute("SHOW GRANTS TO ROLE " + role.name)
             grant_set = cursor.fetchall()
             for cur_grant in grant_set:
-                role.add_grant(
-                    Grant(cur_grant[1], cur_grant[2], cur_grant[3]), roles
-                )
+                role.add_grant(Grant(cur_grant[1], cur_grant[2], cur_grant[3]), roles)
         cursor.execute("SHOW users")
         user_set = cursor.fetchall()
         for user in user_set:
@@ -31,36 +36,36 @@ def fetch_data_from_snowflake():
             cursor.execute("SHOW GRANTS TO USER " + user.name)
             grant_set = cursor.fetchall()
             for cur_grant in grant_set:
-                user.add_grant(
-                    Grant(cur_grant[1], cur_grant[2], cur_grant[3]), users
-                )
+                user.add_grant(Grant(cur_grant[1], cur_grant[2], cur_grant[3]), users)
 
-    with open("./tmp/roles.csv", "w") as f:
+    with open(ROLES_PATH, "w") as f:
         writer = csv.writer(f, delimiter=",")
         for role in roles:
             writer.writerows(",".join([role.name, role.comment]))
 
-    with open("./tmp/role_grants.csv", "w") as f:
+    with open(ROLE_GRANTS_PATH, "w") as f:
         for role in roles:
             role.write_grants(role.name, "ROOT", f)
 
-    with open("./tmp/users.csv", "w") as f:
+    with open(USERS_PATH, "w") as f:
         writer = csv.writer(f, delimiter=",")
         for user in users:
             writer.writerows(",".join([user.name, user.comment]))
 
-    with open("./tmp/user_grants.csv", "w") as f:
+    with open(USER_GRANTS_PATH, "w") as f:
         for user in users:
             user.write_grants(user.name, "ROOT", f)
 
 
-def upload_file_to_s3_with_hook(directory, bucket_name):
+def upload_file_to_s3_with_hook(bucket_name):
     hook = S3_hook.S3Hook("aws_s3_conn")
-    files = os.listdir(directory)
-    base_path = os.path.abspath(directory)
+    files = os.listdir(TMP_DIRECTORY.name)
+    base_path = os.path.abspath(TMP_DIRECTORY.name)
     for file in files:
         file_path = os.path.join(base_path, file)
         hook.load_file(file_path, file, bucket_name)
+
+    TMP_DIRECTORY.cleanup()
 
 
 class Grant(object):
@@ -102,7 +107,7 @@ class Role(object):
                 + ",'"
                 + cur_grant.object_name
                 + "'",
-                file=file_handle
+                file=file_handle,
             )
         for cur_role in self.child_roles:
             cur_role.write_grants(root, current_path, file_handle)
