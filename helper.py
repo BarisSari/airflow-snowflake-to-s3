@@ -41,7 +41,7 @@ def fetch_data_from_snowflake():
     with open(ROLES_PATH, "w") as f:
         writer = csv.writer(f, delimiter=",")
         for role in roles:
-            writer.writerows(",".join([role.name, role.comment]))
+            writer.writerows(role.name + ',' + role.comment)
 
     with open(ROLE_GRANTS_PATH, "w") as f:
         for role in roles:
@@ -50,7 +50,7 @@ def fetch_data_from_snowflake():
     with open(USERS_PATH, "w") as f:
         writer = csv.writer(f, delimiter=",")
         for user in users:
-            writer.writerows(",".join([user.name, user.comment]))
+            writer.writerows(user.name + ',' + user.comment)
 
     with open(USER_GRANTS_PATH, "w") as f:
         for user in users:
