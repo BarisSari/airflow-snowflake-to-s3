@@ -9,6 +9,7 @@ def fetch_data_from_snowflake():
     hook = snowflake_hook.SnowflakeHook("snowflake_conn")
     conn = hook.get_conn()
     roles = []
+    users = []
     with conn.cursor() as cursor:
         cursor.execute("USE DATABASE MY_AUDIT_DB;")
         cursor.execute("SHOW roles")
@@ -22,6 +23,17 @@ def fetch_data_from_snowflake():
                 role.add_grant(
                     Grant(cur_grant[1], cur_grant[2], cur_grant[3]), roles
                 )
+        cursor.execute("SHOW users")
+        user_set = cursor.fetchall()
+        for user in user_set:
+            users.append(Role(user[1], user[9]))
+        for user in users:
+            cursor.execute("SHOW GRANTS TO USER " + user.name)
+            grant_set = cursor.fetchall()
+            for cur_grant in grant_set:
+                user.add_grant(
+                    Grant(cur_grant[1], cur_grant[2], cur_grant[3]), users
+                )
 
     with open("./tmp/roles.csv", "w") as f:
         writer = csv.writer(f, delimiter=",")
@@ -31,6 +43,15 @@ def fetch_data_from_snowflake():
     with open("./tmp/role_grants.csv", "w") as f:
         for role in roles:
             role.write_grants(role.name, "ROOT", f)
+
+    with open("./tmp/users.csv", "w") as f:
+        writer = csv.writer(f, delimiter=",")
+        for user in users:
+            writer.writerows(",".join([user.name, user.comment]))
+
+    with open("./tmp/user_grants.csv", "w") as f:
+        for user in users:
+            user.write_grants(user.name, "ROOT", f)
 
 
 def upload_file_to_s3_with_hook(directory, bucket_name):
