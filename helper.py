@@ -39,8 +39,7 @@ def upload_file_to_s3_with_hook(directory, bucket_name):
     base_path = os.path.abspath(directory)
     for file in files:
         file_path = os.path.join(base_path, file)
-        key = file[:-3]
-        hook.load_file(file_path, key, bucket_name)
+        hook.load_file(file_path, file, bucket_name)
 
 
 class Grant(object):
