@@ -28,11 +28,11 @@ Airflow server can be reached using the following link:
 
 http://localhost:8080/admin/
 
-![Airflow Server](https://raw.githubusercontent.com/BarisSari/airflow-snowflake-to-s3/master/images/1.png?token=AJ3BD4GEVBYAZLX6SIQUICC5ZAO46)
+![Airflow Server](https://raw.githubusercontent.com/BarisSari/airflow-snowflake-to-s3/master/images/1.png)
 
 Before running any DAG, Snowflake and S3 connections must be set. In order to do that, click **Admin->Connections**. Then, click to Create button. You'll see the following form:
 
-![New Connection Form](https://raw.githubusercontent.com/BarisSari/airflow-snowflake-to-s3/master/images/2.png?token=AJ3BD4GEVBYAZLX6SIQUICC5ZAO46)
+![New Connection Form](https://raw.githubusercontent.com/BarisSari/airflow-snowflake-to-s3/master/images/2.png)
 
 For Snowflake connection, please enter the following values:
 ```bash
@@ -68,4 +68,4 @@ In this repository, ***dag.py*** has DAG which uses helper functions in ***helpe
 After that, ***click snowflake_to_s3*** and ***Trigger Dag*** in order to run it. If you successfully followed the instructions,
 your DAG will result in success and you will see something like the following image:
 
-![Successful Dag](https://raw.githubusercontent.com/BarisSari/airflow-snowflake-to-s3/master/images/3.png?token=AJ3BD4GEVBYAZLX6SIQUICC5ZAO46)
+![Successful Dag](https://raw.githubusercontent.com/BarisSari/airflow-snowflake-to-s3/master/images/3.png)
