@@ -54,14 +54,10 @@ def fetch_data_from_snowflake():
             cursor.execute("SHOW GRANTS TO USER " + user.user_name)
             user.get_roles(cursor.fetchall())
 
-    with open(ROLES_PATH, "w") as f:
-        writer = csv.writer(f, delimiter=",")
+    with open(ROLES_PATH, "w") as roles_file, open(ROLE_GRANTS_PATH, "w") as role_grants_file:
         for role in roles:
-            writer.writerow([role.name, role.comment])
-
-    with open(ROLE_GRANTS_PATH, "w") as f:
-        for role in roles:
-            role.write_grants(role.name, "ROOT", f)
+            role.write_roles(roles_file)
+            role.write_grants(role.name, "ROOT", role_grants_file)
 
     with open(USERS_PATH, "w") as users_file, open(
         USER_ROLES_PATH, "w"
@@ -73,7 +69,7 @@ def fetch_data_from_snowflake():
 
 def upload_file_to_s3_with_hook(bucket_name):
     hook = S3_hook.S3Hook("aws_s3_conn")
-    files = [ROLES_PATH, ROLE_GRANTS_PATH, USERS_PATH, USER_GRANTS_PATH]
+    files = [ROLES_PATH, ROLE_GRANTS_PATH, USERS_PATH, USER_ROLES_PATH]
     print(files)
     for file in files:
         # file_path = os.path.join(TMP_DIRECTORY.name, file)
@@ -114,74 +110,49 @@ class User(object):
         )
 
 
-# class RoleGrant(object):
-#     def __init__(self, in_privilege, in_object_type, in_object_name):
-#         self.privilege = in_privilege
-#         self.object_type = in_object_type
-#         self.object_name = in_object_name
-#
-#
-# class Role(object):
-#     def __init__(self, in_name, in_comment):
-#         self.name = in_name
-#         self.comment = in_comment
-#         self.child_roles = set()
-#         self.grants = set()
-#
-#     def add_grant(self, in_grant, all_roles):
-#         if in_grant.object_type == "ROLE":
-#             for role in all_roles:
-#                 if role.name == in_grant.object_name:
-#                     self.child_roles.add(role)
-#                     break
-#             else:
-#                 self.grants.add(in_grant)
-#         else:
-#             self.grants.add(in_grant)
-#
-#     def write_grants(self, root, branch, file_handle):
-#         current_path = branch + "->" + self.name
-#         for cur_grant in self.grants:
-#             print(
-#                 root
-#                 + ","
-#                 + current_path
-#                 + ","
-#                 + cur_grant.privilege
-#                 + ","
-#                 + cur_grant.object_type
-#                 + ",'"
-#                 + cur_grant.object_name
-#                 + "'",
-#                 file=file_handle,
-#             )
-#         for cur_role in self.child_roles:
-#             cur_role.write_grants(root, current_path, file_handle)
-#
-#
-# class UserGrant(object):
-#     def __init__(self, role, granted_to, grantee_name, granted_by):
-#         self.role = role
-#         self.granted_to = granted_to
-#         self.grantee_name = grantee_name
-#         self.granted_by = granted_by
-#
-#
-# class User(object):
-#     def __init__(self, name, created_on):
-#         self.name = name
-#         self.created_on = str(created_on)
-#         self.grants = set()
-#
-#     def add_grant(self, grant):
-#         self.grants.add(grant)
-#
-#     def write_grants(self, file_handle):
-#         for grant in self.grants:
-#             print(
-#                 grant.role,
-#                 grant.granted_to,
-#                 grant.grantee_name,
-#                 grant.granted_by,
-#                 file=file_handle,
-#             )
+class RoleGrant(object):
+    def __init__(self, in_privilege, in_object_type, in_object_name):
+        self.privilege = in_privilege
+        self.object_type = in_object_type
+        self.object_name = in_object_name
+
+
+class Role(object):
+    def __init__(self, in_name, in_comment):
+        self.name = in_name
+        self.comment = in_comment
+        self.child_roles = set()
+        self.grants = set()
+
+    def write_roles(self, file):
+        print(self.name + ",'" + self.comment + "'", file=file)
+
+    def add_grant(self, in_grant, all_roles):
+        if in_grant.object_type == "ROLE":
+            for role in all_roles:
+                if role.name == in_grant.object_name:
+                    self.child_roles.add(role)
+                    break
+            else:
+                self.grants.add(in_grant)
+        else:
+            self.grants.add(in_grant)
+
+    def write_grants(self, root, branch, file_handle):
+        current_path = branch + "->" + self.name
+        for cur_grant in self.grants:
+            print(
+                root
+                + ","
+                + current_path
+                + ","
+                + cur_grant.privilege
+                + ","
+                + cur_grant.object_type
+                + ",'"
+                + cur_grant.object_name
+                + "'",
+                file=file_handle,
+            )
+        for cur_role in self.child_roles:
+            cur_role.write_grants(root, current_path, file_handle)
