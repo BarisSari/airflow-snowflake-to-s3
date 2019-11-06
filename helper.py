@@ -54,7 +54,9 @@ def fetch_data_from_snowflake():
             cursor.execute("SHOW GRANTS TO USER " + user.user_name)
             user.get_roles(cursor.fetchall())
 
-    with open(ROLES_PATH, "w") as roles_file, open(ROLE_GRANTS_PATH, "w") as role_grants_file:
+    with open(ROLES_PATH, "w") as roles_file, open(
+        ROLE_GRANTS_PATH, "w"
+    ) as role_grants_file:
         for role in roles:
             role.write_roles(roles_file)
             role.write_grants(role.name, "ROOT", role_grants_file)
