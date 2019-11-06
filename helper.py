@@ -5,11 +5,18 @@ import tempfile
 from airflow.contrib.hooks import snowflake_hook
 from airflow.hooks import S3_hook
 
-TMP_DIRECTORY = tempfile.TemporaryDirectory()
-ROLES_PATH = os.path.join(TMP_DIRECTORY.name, "roles.csv")
-ROLE_GRANTS_PATH = os.path.join(TMP_DIRECTORY.name, "role_grants.csv")
-USERS_PATH = os.path.join(TMP_DIRECTORY.name, "users.csv")
-USER_GRANTS_PATH = os.path.join(TMP_DIRECTORY.name, "user_grants.csv")
+# If you want to use temporary folder, comment out following paths
+# TMP_DIRECTORY = tempfile.TemporaryDirectory()
+# ROLES_PATH = os.path.join(TMP_DIRECTORY.name, "roles.csv")
+# ROLE_GRANTS_PATH = os.path.join(TMP_DIRECTORY.name, "role_grants.csv")
+# USERS_PATH = os.path.join(TMP_DIRECTORY.name, "users.csv")
+# USER_GRANTS_PATH = os.path.join(TMP_DIRECTORY.name, "user_grants.csv")
+
+TMP_DIRECTORY = os.path.join(os.path.abspath("."), "tmp")
+ROLES_PATH = os.path.join(TMP_DIRECTORY, "roles.csv")
+ROLE_GRANTS_PATH = os.path.join(TMP_DIRECTORY, "role_grants.csv")
+USERS_PATH = os.path.join(TMP_DIRECTORY, "users.csv")
+USER_GRANTS_PATH = os.path.join(TMP_DIRECTORY, "user_grants.csv")
 
 
 def fetch_data_from_snowflake():
@@ -64,11 +71,11 @@ def fetch_data_from_snowflake():
 
 def upload_file_to_s3_with_hook(bucket_name):
     hook = S3_hook.S3Hook("aws_s3_conn")
-    files = os.listdir(TMP_DIRECTORY.name)
-    base_path = os.path.abspath(TMP_DIRECTORY.name)
+    files = [ROLES_PATH, ROLE_GRANTS_PATH, USERS_PATH, USER_GRANTS_PATH]
+    print(files)
     for file in files:
-        file_path = os.path.join(base_path, file)
-        hook.load_file(file_path, file, bucket_name)
+        # file_path = os.path.join(TMP_DIRECTORY.name, file)
+        hook.load_file(file, file[-10:], bucket_name)
 
     TMP_DIRECTORY.cleanup()
 
