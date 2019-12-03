@@ -25,7 +25,7 @@ with DAG(
     upload_to_s3_task = PythonOperator(
         task_id="upload_file_to_s3",
         python_callable=upload_file_to_s3_with_hook,
-        op_kwargs={"bucket_name": "import-snowflake",},
+        op_kwargs={"bucket_name": "import-snowflake"},
         dag=dag,
     )
 

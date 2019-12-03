@@ -10,7 +10,7 @@ from airflow.hooks.S3_hook import S3Hook
 # USERS_PATH = os.path.join(TMP_DIRECTORY.name, "snowflake_users.csv")
 # USER_GRANTS_PATH = os.path.join(TMP_DIRECTORY.name, "snowflake_user_roles.csv")
 
-#Variables
+# Variables
 ROLES_FILE = "snowflake_roles.csv"
 ROLE_GRANTS_FILE = "snowflake_role_grants.csv"
 USERS_FILE = "snowflake_users.csv"
@@ -65,7 +65,9 @@ def fetch_data_from_snowflake():
             role.write_roles(roles_file)
             role.write_grants(role.name, "ROOT", role_grants_file)
 
-    with open(USERS_PATH, "w") as users_file, open(USER_ROLES_PATH, "w") as user_roles_file:
+    with open(USERS_PATH, "w") as users_file, open(
+        USER_ROLES_PATH, "w"
+    ) as user_roles_file:
         for user in users:
             user.write_user_record(users_file)
             user.write_roles(user_roles_file)
